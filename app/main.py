@@ -48,7 +48,7 @@ class LinkStats(BaseModel):
     last_used_at: datetime | None
     expires_at: datetime | None
 
-# Зависимость для работы с БД
+
 def get_db():
     db = SessionLocal()
     try:
@@ -62,7 +62,6 @@ app = FastAPI()
 def generate_short_code() -> str:
     return uuid.uuid4().hex[:6]
 
-# Endpoint создания короткой ссылки
 @app.post("/links/shorten")
 def create_link(link: LinkCreate, db: Session = Depends(get_db)):
     # Проверка на уникальность кастомного alias, если он указан
@@ -81,14 +80,13 @@ def create_link(link: LinkCreate, db: Session = Depends(get_db)):
     db.commit()
     return {"short_code": short_code}
 
-# Endpoint перенаправления
+
 @app.get("/{short_code}")
 def redirect_to_original(short_code: str, db: Session = Depends(get_db)):
     link = db.query(Link).filter(Link.short_code == short_code).first()
     if not link:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ссылка не найдена")
-    
-    # Проверка срока жизни ссылки
+
     if link.expires_at and datetime.utcnow() > link.expires_at:
         db.delete(link)
         db.commit()
@@ -99,8 +97,6 @@ def redirect_to_original(short_code: str, db: Session = Depends(get_db)):
     link.last_used_at = datetime.utcnow()
     db.commit()
     return RedirectResponse(url=link.original_url)
-
-# Endpoint удаления ссылки
 @app.delete("/links/{short_code}")
 def delete_link(short_code: str, db: Session = Depends(get_db)):
     link = db.query(Link).filter(Link.short_code == short_code).first()
@@ -109,8 +105,6 @@ def delete_link(short_code: str, db: Session = Depends(get_db)):
     db.delete(link)
     db.commit()
     return {"message": "Ссылка удалена"}
-
-# Endpoint обновления оригинального URL для существующей короткой ссылки
 @app.put("/links/{short_code}")
 def update_link(short_code: str, link_update: LinkUpdate, db: Session = Depends(get_db)):
     link = db.query(Link).filter(Link.short_code == short_code).first()
@@ -119,8 +113,6 @@ def update_link(short_code: str, link_update: LinkUpdate, db: Session = Depends(
     link.original_url = str(link_update.original_url)
     db.commit()
     return {"message": "Ссылка обновлена"}
-
-# Endpoint получения статистики по ссылке
 @app.get("/links/{short_code}/stats", response_model=LinkStats)
 def link_stats(short_code: str, db: Session = Depends(get_db)):
     link = db.query(Link).filter(Link.short_code == short_code).first()
@@ -134,7 +126,6 @@ def link_stats(short_code: str, db: Session = Depends(get_db)):
         expires_at=link.expires_at
     )
 
-# Endpoint поиска ссылки по оригинальному URL
 @app.get("/links/search")
 def search_link(original_url: HttpUrl, db: Session = Depends(get_db)):
     link = db.query(Link).filter(Link.original_url == str(original_url)).first()
