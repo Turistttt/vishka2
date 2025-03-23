@@ -1,5 +1,6 @@
-API-сервис сокращения ссылок.
+API-сервис сокращения ссылок
 Ссылка для подключения: https://fastapi-3kkv.onrender.com/docs
+
 Инструкция :
 Переходим по ссылке https://fastapi-3kkv.onrender.com/docs
 Пример запроса
@@ -11,6 +12,8 @@ POST /links/shorten – создает короткую ссылку (Нажим
 }
 Далее переходим по ссылке вида :  https://fastapi-3kkv.onrender.com/<custom_alias>
 В нашем случае https://fastapi-3kkv.onrender.com/custom_alias3232 и попадаем на страницу google
+
+
 Полный список реализованного функционала : 
 Создание / удаление / изменение / получение информации по короткой ссылке:
 POST /links/shorten – создает короткую ссылку.
