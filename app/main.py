@@ -13,7 +13,6 @@ app = FastAPI()
 @app.get("/")
 async def redirect_to_docs():
     return RedirectResponse(url="/docs")
-# Настройка БД
 SQLALCHEMY_DATABASE_URL = "sqlite:///./links.db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -32,7 +31,6 @@ class Link(Base):
 
 Base.metadata.create_all(bind=engine)
 
-# Pydantic схемы
 class LinkCreate(BaseModel):
     original_url: HttpUrl
     custom_alias: str | None = None
@@ -58,13 +56,12 @@ def get_db():
 
 app = FastAPI()
 
-# Генерация уникального короткого кода, если custom_alias не передан
+
 def generate_short_code() -> str:
     return uuid.uuid4().hex[:6]
 
 @app.post("/links/shorten")
 def create_link(link: LinkCreate, db: Session = Depends(get_db)):
-    # Проверка на уникальность кастомного alias, если он указан
     short_code = link.custom_alias if link.custom_alias else generate_short_code()
     existing_link = db.query(Link).filter(Link.short_code == short_code).first()
     if existing_link:
@@ -73,7 +70,7 @@ def create_link(link: LinkCreate, db: Session = Depends(get_db)):
     
     new_link = Link(
         short_code=short_code,
-        original_url=str(link.original_url),  # Приводим к строке для БД
+        original_url=str(link.original_url), 
         expires_at=link.expires_at
     )
     db.add(new_link)
@@ -91,8 +88,7 @@ def redirect_to_original(short_code: str, db: Session = Depends(get_db)):
         db.delete(link)
         db.commit()
         raise HTTPException(status_code=status.HTTP_410_GONE, detail="Ссылка истекла")
-    
-    # Обновление статистики
+
     link.redirect_count += 1
     link.last_used_at = datetime.utcnow()
     db.commit()
